@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation</title>
+</head>
+<body>
+<p>Hello,</p>
+<p>Thank you for your booking. Here are your booking details:</p>
+<ul>
+    <li>Flight Number: <span th:text="${bookingDetails.flightNumber}"></span></li>
+    <li>Date: <span th:text="${bookingDetails.date}"></span></li>
+    <li>Seat: <span th:text="${bookingDetails.seat}"></span></li>
+</ul>
+<p>We look forward to seeing you on board.</p>
+</body>
+</html>
