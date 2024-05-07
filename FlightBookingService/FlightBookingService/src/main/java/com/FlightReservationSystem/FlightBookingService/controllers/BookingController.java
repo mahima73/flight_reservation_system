@@ -1,6 +1,7 @@
 package com.FlightReservationSystem.FlightBookingService.controllers;
 
 import com.FlightReservationSystem.FlightBookingService.entities.Booking;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,8 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
     @PostMapping
+    @Hidden
+    //hidden annotation hides the REST API from swagger html page where all API will be shown. If we want that Delete API should be hidden we can use this annotation
     public ResponseEntity<Booking> bookFlightTicket(@RequestBody Booking booking){
         Booking res = bookingService.bookFlight(booking);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
