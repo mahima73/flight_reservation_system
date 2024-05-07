@@ -2,6 +2,7 @@ package com.FlightReservationSystem.FlightBookingService.controllers;
 
 import com.FlightReservationSystem.FlightBookingService.entities.Booking;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,8 @@ public class BookingController {
     }
 
     @GetMapping
+    //By using the Operation annotation we can specify for a particular API about its description and tags
+    @Operation(tags = "GetAllBookingsTag", description = "this API will get us all the bookings done by user")
     public ResponseEntity<List<Booking>> getAllBooking(){
         List<Booking> bookingList = bookingService.getAllBookings();
         return ResponseEntity.ok(bookingList);

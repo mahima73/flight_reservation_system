@@ -36,4 +36,8 @@ spring:
   application:
     name: FLIGHTBOOKINGSERVICE
 
+#this will do sorting based on HTTP Method and will show us on swagger UI page
+springdoc:
+  swagger-ui:
+    operations-sorter: method
 
