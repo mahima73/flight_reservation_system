@@ -40,4 +40,10 @@ public class BookingController {
         Booking foundBooking = bookingService.getSingleBooking(bookId);
         return ResponseEntity.ok(foundBooking);
     }
+
+    @DeleteMapping("/{bookid}")
+    public ResponseEntity<String> deleteBooking(@PathVariable String bookid){
+        bookingService.cancelBooking(bookid);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking cancelled successfully");
+    }
 }

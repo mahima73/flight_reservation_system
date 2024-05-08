@@ -13,5 +13,7 @@ public interface BookingService {
 
     Booking getSingleBooking(String bookingId);
 
+    void cancelBooking(String bookingid);
+
 
 }

@@ -25,6 +25,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -100,6 +101,15 @@ public class BookingServiceImpl implements BookingService{
         mailService.sendEmail(toMail,"Ticket confirmed",message);
     }
 
+    private void sendCancellationEmail(String name, String email, int totalAmt){
+        String message = String.format(
+                "Dear %s, \n Your booking has successfully cancelled. Refund of amount %s is initiated and will be reflected to your " +
+                        "account soon." +
+                        "\nPlease reach out to customer care for any issues",
+                name,totalAmt);
+        mailService.sendEmail(email,"Booking cancellation update",message);
+    }
+
     private void sendReminderEmail(String name, String toEmail){
         String message = String.format("Dear %s, This is a reminder email about your flight that is going to departure soon in 1 hour. " +
                 "Please prepare yourself\n" +
@@ -108,29 +118,35 @@ public class BookingServiceImpl implements BookingService{
         mailService.sendEmail(toEmail,"Reminder email for Flight soon to departure",message);
     }
 
-//    @Scheduled(fixedRate = 60000L)
-//    public void checkAndAlertMail(){
-//        logger.info("alert mail bhjne ki koshish");
-//        List<Booking> bookings = getAllBookings();
-//        //Looping through all bookings and fetching flight time
-//        for(Booking bookingElem: bookings){
-//            FlightDto flightDto = flightService.getSingleFlight(bookingElem.getFlightId());
-//            LocalTime flightDepartureTime = flightDto.getDepartureTime();
-//            LocalTime currentSystemTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
-//            boolean isAlertSent = bookingElem.isReminderAlertSent();
-//            if((ChronoUnit.HOURS.between(currentSystemTime,flightDepartureTime) == 1) && !isAlertSent){
-//                System.out.println("email sent");
-//                isAlertSent = true;
-//                bookingElem.setReminderAlertSent(isAlertSent);
-//                flightBookingRepo.save(bookingElem);
-//                UserDto usrDto = usrSrvc.fetchSingleUser(bookingElem.getUserId());
-//                String fullName = usrDto.getName();
-//                sendReminderEmail(fullName,usrDto.getEmail());
+    @Scheduled(fixedRate = 60000L)
+    public void checkAndAlertMail(){
+        logger.info("alert mail bhjne ki koshish");
+        List<Booking> bookings = getAllBookings();
+        //Looping through all bookings and fetching flight time
+        for(Booking bookingElem: bookings){
+            //if flight departure date is equal to today's date only then check for time to send further reminder
+            LocalDate todayDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+            if(Objects.equals(bookingElem.getTravelDate(), todayDate)){
+                FlightDto flightDto = flightService.getSingleFlight(bookingElem.getFlightId());
 
-//            }
+                LocalTime flightDepartureTime = flightDto.getDepartureTime();
+                LocalTime currentSystemTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+                boolean isAlertSent = bookingElem.isReminderAlertSent();
+                if((ChronoUnit.HOURS.between(currentSystemTime,flightDepartureTime) == 1) && !isAlertSent){
+                    System.out.println("email sent");
+                    isAlertSent = true;
+                    bookingElem.setReminderAlertSent(isAlertSent);
+                    flightBookingRepo.save(bookingElem);
+                    UserDto usrDto = usrSrvc.fetchSingleUser(bookingElem.getUserId());
+                    String fullName = usrDto.getName();
+                    sendReminderEmail(fullName,usrDto.getEmail());
 
-//        }
-//    }
+                }
+            }
+
+
+        }
+    }
 
     @Override
     public List<Booking> getAllBookings(){
@@ -140,5 +156,18 @@ public class BookingServiceImpl implements BookingService{
     @Override
     public Booking getSingleBooking(String bookingId) {
         return flightBookingRepo.findById(bookingId).orElseThrow(()-> new ResourceNotFoundException("Sorry this booking id " + bookingId + " doesn't exist"));
+    }
+
+    @Override
+    public void cancelBooking(String bookingid){
+        Booking bookingFound = getSingleBooking(bookingid);
+        UserDto userdto = usrSrvc.fetchSingleUser(bookingFound.getUserId());
+        FlightDto fdto = flightService.getSingleFlight(bookingFound.getFlightId());
+        int updatedSeats = fdto.getAvailableSeats() + bookingFound.getNumOfSeatsBooked();
+
+        flightBookingRepo.deleteById(bookingid);
+        //As booking is cancelled we need to update number of available seats in the flight which was booked
+        flightService.updateFlightInfo(bookingFound.getFlightId(), updatedSeats);
+        sendCancellationEmail(userdto.getName(),userdto.getEmail(),bookingFound.getAmount());
     }
 }
